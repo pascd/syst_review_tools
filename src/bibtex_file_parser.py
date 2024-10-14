@@ -106,7 +106,17 @@ def bib_file_dump(final_entry_arr_, _output_file_path, input_bib_file_):
           f"\n\t {len(input_bib_file_.entries) - len(bibtex_database_.entries)} have missing arguments."
           f"\n\t with the respective modifications on: {_modified_entries}")
 
-def bib_parser_main(input_file_, required_args_, _output_file_path):
+def bib_parser_main(input_file_, required_args_):
+
+    _output_dir_name = os.path.dirname(_input_file)
+    _output_file_path = os.path.join(_output_dir_name, _output_file_name)
+
+    # Definition of global variables
+    _modified_entries = {}
+
+    # Fill the dictionary with pre-values
+    for _arg in _required_args:
+        _modified_entries[_arg] = 0
 
     # Load the bibtex file
     bib_file_ = bib_load_file(input_file_)
@@ -126,17 +136,7 @@ if __name__ == "__main__":
     _required_args = sys.argv[2]
     _output_file_name = sys.argv[3]
 
-    _output_dir_name = os.path.dirname(_input_file)
-    _output_file_path = os.path.join(_output_dir_name, _output_file_name)
-
-    # Definition of global variables
-    _modified_entries = {}
-
     ## Test
     _required_args = ["author", "title", "abstract", "year", "pages"]
 
-    # Fill the dictionary with pre-values
-    for _arg in _required_args:
-        _modified_entries[_arg] = 0
-
-    bib_parser_main(_input_file, _required_args, _output_file_path)
+    bib_parser_main(_input_file, _required_args)
