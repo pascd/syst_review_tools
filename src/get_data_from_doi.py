@@ -24,40 +24,37 @@ def request_data_crossref(doi_):
         data = response.json()
 
         # Extract various fields from the JSON data
-        title = data.get('message', {}).get('title', ['No title available'])[0]
+        title = data.get('message', {}).get('title', [''])[0]
         authors = data.get('message', {}).get('author', [])
         year = data.get('message', {}).get('published-print', {}).get('date-parts', [[None]])[0][0]
-        journal = data.get('message', {}).get('container-title', ['No journal title available'])[0]
-        pages = data.get('message', {}).get('page', 'No page information available')
+        journal = data.get('message', {}).get('container-title', [''])[0]
+        pages = data.get('message', {}).get('page', [''])
 
-        # Format authors
-        author_names = ', '.join([f"{author['given']} {author['family']}" for author in authors if 'given' in author and 'family' in author])
+        # Format authors if both 'given' and 'family' names are available
+        authors = ', '.join([f"{author['given']} {author['family']}" for author in authors if 'given' in author and 'family' in author])
 
-        # Check if abstract exists and process it
+        # Check if abstract exists and clean it if needed
         abstract = data.get('message', {}).get('abstract', None)
         if abstract:
-            # Clean the abstract if it exists
             abstract_cleaned = abstract.replace('<jats:p>', '\n').replace('</jats:p>', '\n')
             abstract_cleaned = re.sub(r'<[^>]*>', ' ', abstract_cleaned)
         else:
-            abstract_cleaned = "No abstract available."
+            abstract_cleaned = None
 
-        entry_request_ = {
-            "title" : title,
-            "authors" : author_names,
-            "year" : year,
-            "pages" : pages,
-            "journal" : journal,
-            "abstract" : abstract
-        }
+        # Build the entry dictionary only with valid fields
+        entry_request_ = {}
 
-        # Print the formatted information
-        #print("Title:", title)
-        #print("Authors:", author_names)
-        #print("Publication Year:", publication_year)
-        #print("Journal:", journal)
-        #print("Pages:", pages)
-        #print("Abstract:\n", abstract_cleaned)
+        # Add only fields that are not empty or None
+        if title:
+            entry_request_["title"] = title
+        if authors:
+            entry_request_["author"] = authors
+        if year:
+            entry_request_["year"] = year
+        if pages and pages != ['']:
+            entry_request_["pages"] = pages
+        if abstract_cleaned:
+            entry_request_["abstract"] = abstract_cleaned
 
     except requests.exceptions.RequestException as e:
         print(f"Error fetching data from CrossRef: {e}")
