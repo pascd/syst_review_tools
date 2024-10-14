@@ -26,7 +26,7 @@ def request_data_crossref(doi_):
         # Extract various fields from the JSON data
         title = data.get('message', {}).get('title', ['No title available'])[0]
         authors = data.get('message', {}).get('author', [])
-        publication_year = data.get('message', {}).get('published-print', {}).get('date-parts', [[None]])[0][0]
+        year = data.get('message', {}).get('published-print', {}).get('date-parts', [[None]])[0][0]
         journal = data.get('message', {}).get('container-title', ['No journal title available'])[0]
         pages = data.get('message', {}).get('page', 'No page information available')
 
@@ -45,7 +45,7 @@ def request_data_crossref(doi_):
         entry_request_ = {
             "title" : title,
             "authors" : author_names,
-            "year" : publication_year,
+            "year" : year,
             "pages" : pages,
             "journal" : journal,
             "abstract" : abstract

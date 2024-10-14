@@ -56,26 +56,26 @@ def bib_arg_checking(bib_file_, required_args_):
         for arg_ in required_args_:
             continue
             
-            # if arg_ not in entry_:
-            #     print(f"\n\tArgument [{arg_}] not in entry {entry_id_}")
-            #     missing_args_.insert(len(missing_args_)-1, arg_)
+            if arg_ not in entry_:
+                print(f"\n\tArgument [{arg_}] not in entry {entry_id_}")
+                missing_args_.insert(len(missing_args_)-1, arg_)
             
-            # if len(missing_args_) > 0:
+            if len(missing_args_) > 0:
 
-            #     doi = entry_.get("doi", "")
+                doi = entry_.get("doi", "")
 
-            #     if len(doi) == 0:
-            #         print(f"The entry {entry_id_} has no valid DOI, ignoring auto-fill")
-            #         continue
+                if len(doi) == 0:
+                    print(f"The entry {entry_id_} has no valid DOI, ignoring auto-fill")
+                    continue
 
-            #     #entry_data_ = get_data_from_doi_main(doi)
+                #entry_data_ = get_data_from_doi_main(doi)
                 
-            #     for missing_ in missing_args_:
-            #         #TODO Implement the function to automatically insert the missing and retrieved parameters
-            #         continue
+                for missing_ in missing_args_:
+                    #TODO Implement the function to automatically insert the missing and retrieved parameters
+                    continue
             
-            # else:
-            #     final_entry_arr_.insert(len(final_entry_arr_)-1, entry_)
+            else:
+                final_entry_arr_.insert(len(final_entry_arr_)-1, entry_)
 
     return final_entry_arr_
 
