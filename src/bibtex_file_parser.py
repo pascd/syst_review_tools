@@ -1,7 +1,11 @@
 import os
 import bibtexparser
 from bibtexparser.bparser import BibTexParser
+import requests
+import re
 import sys
+
+from get_data_from_doi import get_data_from_doi_main
 
 def bib_load_file(input_file_):
 
@@ -47,7 +51,10 @@ def bib_arg_checking(bib_file_, required_args_):
         for arg_ in required_args_:
             if arg_ not in entry_:
                 print(f"\n\tArgument [{arg_}] not in entry {entry_id_}")
-                missing_args_.insert(len(missing_args_)-1, arg_)    
+                missing_args_.insert(len(missing_args_)-1, arg_)
+            doi = entry_.get("doi", "The entry has no defined DOI")
+            get_data_from_doi_main(doi)
+            
 
 def bib_parser_main(input_file_, required_args_):
 

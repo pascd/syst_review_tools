@@ -2,15 +2,9 @@ import os
 import sys
 
 def merge_bibtex_files(input_files, output_file):
-    """
-    Merges multiple BibTeX files into one, with a blank line between each entry.
 
-    Parameters:
-        input_files (list): List of paths to BibTeX files to be merged.
-        output_file (str): Path to the output merged BibTeX file.
-    """
-    entries = set()  # To store unique entries
-    current_entry = []  # To store lines of the current BibTeX entry
+    entries = set()
+    current_entry = []
 
     with open(output_file, 'w', encoding='utf-8') as outfile:
         for bib_file in input_files:
@@ -18,13 +12,13 @@ def merge_bibtex_files(input_files, output_file):
                 for line in infile:
                     # Detect the start of a new BibTeX entry
                     if line.strip().startswith('@'):
-                        # Write the previous entry (if any) and add a newline between entries
+                        
                         if current_entry:
                             entry_text = ''.join(current_entry).strip()
                             if entry_text not in entries:
-                                outfile.write(entry_text + "\n\n")  # Write entry followed by a blank line
+                                outfile.write(entry_text + "\n\n")
                                 entries.add(entry_text)
-                            current_entry = []  # Reset for the next entry
+                            current_entry = []
 
                     # Add line to the current entry
                     current_entry.append(line)
@@ -33,9 +27,9 @@ def merge_bibtex_files(input_files, output_file):
                 if current_entry:
                     entry_text = ''.join(current_entry).strip()
                     if entry_text not in entries:
-                        outfile.write(entry_text + "\n\n")  # Write entry followed by a blank line
+                        outfile.write(entry_text + "\n\n")
                         entries.add(entry_text)
-                    current_entry = []  # Reset for the next file
+                    current_entry = []
 
     print(f"Merged {len(input_files)} files into {output_file}")
 
