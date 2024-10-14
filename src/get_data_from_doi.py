@@ -3,15 +3,22 @@ import re
 import os
 import sys
 import json
+import urllib.parse
 
 def request_data_crossref(doi_):
+
+    entry_request_ = {}
+
+    # Encode the DOI to handle special characters
+    encoded_doi_ = urllib.parse.quote(doi_, safe='')
+
     # CrossRef API endpoint for the DOI
-    url = f"http://api.crossref.org/works/{doi_}"
+    url = f"http://api.crossref.org/works/{encoded_doi_}"
     
     try:
         # Send a GET request to the API
         response = requests.get(url)
-        response.raise_for_status()  # Raise an error for bad responses
+        response.raise_for_status()
         
         # Parse the JSON response
         data = response.json()
@@ -35,13 +42,22 @@ def request_data_crossref(doi_):
         else:
             abstract_cleaned = "No abstract available."
 
+        entry_request_ = {
+            "title" : title,
+            "authors" : author_names,
+            "year" : publication_year,
+            "pages" : pages,
+            "journal" : journal,
+            "abstract" : abstract
+        }
+
         # Print the formatted information
-        print("Title:", title)
-        print("Authors:", author_names)
-        print("Publication Year:", publication_year)
-        print("Journal:", journal)
-        print("Pages:", pages)
-        print("Abstract:\n", abstract_cleaned)
+        #print("Title:", title)
+        #print("Authors:", author_names)
+        #print("Publication Year:", publication_year)
+        #print("Journal:", journal)
+        #print("Pages:", pages)
+        #print("Abstract:\n", abstract_cleaned)
 
     except requests.exceptions.RequestException as e:
         print(f"Error fetching data from CrossRef: {e}")
@@ -50,9 +66,13 @@ def request_data_crossref(doi_):
     except Exception as e:
         print(f"An error occurred: {e}")
 
+    return entry_request_
+
 def get_data_from_doi_main(doi_):
 
-    request_data_crossref(doi_)
+    data_request_ = request_data_crossref(doi_)
+
+    return data_request_
 
 if __name__ == "__main__":
     

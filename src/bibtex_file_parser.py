@@ -5,6 +5,8 @@ import requests
 import re
 import sys
 
+from bibtexparser.bwriter import BibTexWriter
+from bibtexparser.bibdatabase import BibDatabase
 from get_data_from_doi import get_data_from_doi_main
 
 def bib_load_file(input_file_):
@@ -12,7 +14,7 @@ def bib_load_file(input_file_):
     # Create the parser
     parser = BibTexParser(common_strings=False)
     parser.ignore_nonstandard_types = False
-    parser.homogenise_fields = False
+    parser.homogenise_fields = True
 
     # Open the .bib file with utf-8 encoding
     try:
@@ -43,20 +45,57 @@ def bib_error_checking(bib_file_):
 def bib_arg_checking(bib_file_, required_args_):
 
     missing_args_ = []
+    final_entry_arr_ = []
 
     # Iterate over the entries dictionary
     for entry_ in bib_file_.entries:
         entry_id_ = entry_.get('id', 'unknown')
 
-        for arg_ in required_args_:
-            if arg_ not in entry_:
-                print(f"\n\tArgument [{arg_}] not in entry {entry_id_}")
-                missing_args_.insert(len(missing_args_)-1, arg_)
-            doi = entry_.get("doi", "The entry has no defined DOI")
-            get_data_from_doi_main(doi)
-            
+        final_entry_arr_.insert(len(final_entry_arr_)-1, entry_)
 
-def bib_parser_main(input_file_, required_args_):
+        for arg_ in required_args_:
+            continue
+            
+            # if arg_ not in entry_:
+            #     print(f"\n\tArgument [{arg_}] not in entry {entry_id_}")
+            #     missing_args_.insert(len(missing_args_)-1, arg_)
+            
+            # if len(missing_args_) > 0:
+
+            #     doi = entry_.get("doi", "")
+
+            #     if len(doi) == 0:
+            #         print(f"The entry {entry_id_} has no valid DOI, ignoring auto-fill")
+            #         continue
+
+            #     #entry_data_ = get_data_from_doi_main(doi)
+                
+            #     for missing_ in missing_args_:
+            #         #TODO Implement the function to automatically insert the missing and retrieved parameters
+            #         continue
+            
+            # else:
+            #     final_entry_arr_.insert(len(final_entry_arr_)-1, entry_)
+
+    return final_entry_arr_
+
+def bib_file_dump(final_entry_arr_, _output_file_path, input_bib_file_):
+
+    bibtex_database_ = BibDatabase()
+    bibtex_database_.entries = final_entry_arr_
+
+    writer = BibTexWriter()
+
+    with open(_output_file_path, 'w', encoding="utf-8") as bibtex_file:
+        bibtex_file.write(writer.write(bibtex_database_))
+        #bibtexparser.dump(bibtex_database_, bibtex_file)
+    
+    print(f"\n\n\tThe output file has: "
+          f"\n\t {len(bibtex_database_.entries)} valid entries"
+          f"\n\t {len(input_bib_file_.entries) - len(bibtex_database_.entries)} have missing arguments.")
+
+
+def bib_parser_main(input_file_, required_args_, _output_file_path):
 
     # Load the bibtex file
     bib_file_ = bib_load_file(input_file_)
@@ -65,14 +104,22 @@ def bib_parser_main(input_file_, required_args_):
     bib_error_checking(bib_file_)
 
     # Execute arg checking
-    bib_arg_checking(bib_file_, required_args_)
+    final_entry_arr_ = bib_arg_checking(bib_file_, required_args_)
+ 
+    # Write to a new file the whole content of the new bibtex file
+    bib_file_dump(final_entry_arr_, _output_file_path, bib_file_)
 
 if __name__ == "__main__":
 
     _input_file = sys.argv[1]
     _required_args = sys.argv[2]
+    _output_file_name = sys.argv[3]
+
+    _output_dir_name = os.path.dirname(_input_file)
+
+    _output_file_path = os.path.join(_output_dir_name, _output_file_name)
 
     ## Test
-    _required_args = ["author", "title"]
+    _required_args = ["author", "title", "abstract"]
 
-    bib_parser_main(_input_file, _required_args)
+    bib_parser_main(_input_file, _required_args, _output_file_path)
