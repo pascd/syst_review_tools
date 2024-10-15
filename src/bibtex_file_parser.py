@@ -9,6 +9,9 @@ from bibtexparser.bwriter import BibTexWriter
 from bibtexparser.bibdatabase import BibDatabase
 from get_data_from_doi import get_data_from_doi_main
 
+# Definition of global variables
+_modified_entries = {}
+
 def bib_load_file(input_file_):
 
     # Create the parser
@@ -78,7 +81,7 @@ def bib_arg_checking(bib_file_, required_args_):
             for missing_ in missing_args_:
                 if missing_ in entry_data_:
                     entry_[missing_] = entry_data_[missing_]
-                    _modified_entries[missing_] += 1
+                    #_modified_entries[missing_] += 1
                     #print(f"\n\t ** Added arg [{missing_}] to entry: {entry_id_}")
         
         # Add the new entry to a new array of entries
@@ -111,7 +114,6 @@ def bib_parser_main(input_file_, required_args_):
     _output_dir_name = os.path.dirname(_input_file)
     _output_file_path = os.path.join(_output_dir_name, _output_file_name)
 
-    # Definition of global variables
     _modified_entries = {}
 
     # Fill the dictionary with pre-values

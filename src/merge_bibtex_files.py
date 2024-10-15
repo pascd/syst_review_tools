@@ -51,14 +51,18 @@ def merge_bibtex_main(input_files_path):
         if file.endswith(".bib"):
             input_files_.append(os.path.join(input_files_path, file))
 
+    # Outputh file path
+    output_file = os.path.join(input_files_path, output_file_name_)
+
     if len(input_files_) > 1:
-        output_file = os.path.join(input_files_path, output_file_name_)
         merge_bibtex_files(input_files_, output_file)
+        return output_file
     elif len(input_files_) == 1:
         print(f"There's no need to merge BibTeX files since there's only one file in folder: {input_files_path_}")
     else:
         print(f"Could not find any .bib file in folder: {input_files_path_}")
-
+    
+    
 if __name__ == "__main__":
     input_files_path_ = sys.argv[1]
     merge_bibtex_main(input_files_path_)
