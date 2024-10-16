@@ -32,20 +32,20 @@ def merge_bibtex_files(_input_files, _output_file):
                         _entries.add(_entry_text)
                     _current_entry = []
 
-    print(f"\tMerged {len(_input_files)} files into {_output_file}")
+    print(f"  -> Merged {len(_input_files)} files into {_output_file}")
 
 def merge_bibtex_main(_input_files_path):
 
     # Initiated merger
-    print(f"\tInitiated merger for bibtex files:")
+    print(f"  -> Initiated merger for bibtex files:")
 
     # Ensure the path to the folder exists and is reachable
     _input_files_path = _input_files_path.strip()
 
     if os.path.exists(_input_files_path):
-        print(f"\tPath {_input_files_path} exists and is reachable.")
+        print(f"  -> Path {_input_files_path} exists and is reachable.")
     else:
-        print(f"\tPath {_input_files_path} does not exist.")
+        print(f"  -> Path {_input_files_path} does not exist.")
         sys.exit(1)
 
     # Initialize a vector to store multiple .bib files
@@ -66,9 +66,9 @@ def merge_bibtex_main(_input_files_path):
         merge_bibtex_files(_input_files, _output_file)
     elif len(_input_files) == 1:  
         shutil.copy(_input_files[0], _output_file)      
-        print(f"\tThere's no need to merge BibTeX files since there's only one file in folder: {_input_files_path}")
+        print(f"  -> There's no need to merge BibTeX files since there's only one file in folder: {_input_files_path}")
     else:
-        print(f"\tCould not find any .bib file in folder: {_input_files_path}")
+        print(f"  -> Could not find any .bib file in folder: {_input_files_path}")
 
     return _output_file
     

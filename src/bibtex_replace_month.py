@@ -1,40 +1,44 @@
 import os
 import sys
-import bibtexparser
 
-from bibtexparser.bwriter import BibTexWriter
-from bibtexparser.bibdatabase import BibDatabase
-
-def bib_load_file(_input_file):
-
-    # Create the parser
-    parser = BibTexParser(common_strings=False)
-    parser.ignore_nonstandard_types = False
-    parser.homogenise_fields = True
-
-    # Open the .bib file with utf-8 encoding
-    try:
-        with open(_input_file, 'r', encoding='utf-8') as _bibtex_file_:
-            _bibtex_str = _bibtex_file_.read()
-    except UnicodeDecodeError as e:
-        print(f"\n\tError reading file: {e}")
-        sys.exit(1)
-
-    _bib_file = bibtexparser.loads(_bibtex_str, parser=parser) 
-
-    return _bib_file
+month_conversion_ = {
+    "jan" : "01",
+    "feb" : "02",
+    "mar" : "03",
+    "apr" : "04",
+    "may" : "05",
+    "jun" : "06",
+    "jul" : "07",
+    "aug" : "08",
+    "sep" : "09",
+    "oct" : "10",
+    "nov" : "11",
+    "dec" : "12"
+}
 
 def replace_month(_bib_file):
+    # Read the lines from bibtex
+    with open(_bib_file, 'r', encoding='utf-8') as _file:
+        lines = _file.readlines()
 
-    for _entry in _bib_file.entries:
-        
-        
+    try:
+        with open(_bib_file, 'w', encoding='utf-8') as _file:
+            for line in lines:
+                # Look for the 'month =' line
+                if 'month =' in line.lower():
+                    # Extract the month abbreviation
+                    _month_value = line.split('=')[1].strip().strip('{}",')
+                    # Replace if found in the dictionary
+                    if _month_value in month_conversion_ and not isinstance(_month_value, int):
+                        line = f'month = {{{month_conversion_[_month_value]}}},\n'
+                _file.write(line)
+        print(f"  -> File {_bib_file} has all the month fields in INT format.")
+    except:
+        print("  -> An error occured when executing [month_replacement]")
 
 def replace_month_main(_input_file):
 
-    _bib_file = bib_load_file(_input_file)
-
-
+    replace_month(_input_file)
 
 if __name__ == "__main__":
 

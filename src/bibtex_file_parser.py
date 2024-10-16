@@ -24,7 +24,7 @@ def bib_load_file(_input_file):
         with open(_input_file, 'r', encoding='utf-8') as _bibtex_file_:
             _bibtex_str = _bibtex_file_.read()
     except UnicodeDecodeError as e:
-        print(f"\n\tError reading file: {e}")
+        print(f"  -> Error reading file: {e}")
         sys.exit(1)
 
     _bib_file = bibtexparser.loads(_bibtex_str, parser=parser) 
@@ -34,16 +34,17 @@ def bib_load_file(_input_file):
 # Function to parse bibtex file
 def bib_error_checking(_bib_file):
 
-    print(f"\n\t{len(_bib_file.entries)} entries"
-    f"\n\t{len(_bib_file.comments)} comments"
-    f"\n\t{len(_bib_file.strings)} strings and"
-    f"\n\t{len(_bib_file.preambles)} preambles")
+    print(f"  -> The input file has:")
+    print(f"\n  ** {len(_bib_file.entries)} entries"
+    f"\n  ** {len(_bib_file.comments)} comments"
+    f"\n  ** {len(_bib_file.strings)} strings and"
+    f"\n  ** {len(_bib_file.preambles)} preambles")
 
     if(len(_bib_file.entries) == 0):
-        print(f"\n\tThe parsed bibtex file has no entries to process.")
+        print(f"  -> The parsed bibtex file has no entries to process.")
         sys.exit(1)
         
-    print(f"\n\tThe bibtex file was successfully parsed.")
+    print(f"  -> The bibtex file was successfully parsed.")
 
 def bib_arg_checking(_bib_file, _required_args):
 
@@ -54,7 +55,7 @@ def bib_arg_checking(_bib_file, _required_args):
     # Iterate over the entries dictionary
     for _entry in _bib_file.entries:
         # Print actual entry in execution
-        print(f"Entry {_i}/{len(_bib_file.entries)}")
+        print(f"  ** Entry {_i}/{len(_bib_file.entries)}")
 
         _entry_id = _entry.get('id', 'unknown')
 
@@ -70,7 +71,7 @@ def bib_arg_checking(_bib_file, _required_args):
 
             # If the entry does not have a DOI, skip the search
             if len(doi) == 0:
-                print(f"\n\tThe entry {_entry_id} has no valid DOI, ignoring auto-fill")
+                print(f"  -> The entry {_entry_id} has no valid DOI, ignoring auto-fill")
                 _final_entry_arr.insert(len(_final_entry_arr)-1, _entry)
                 _i += 1
                 continue
@@ -96,20 +97,20 @@ def bib_file_dump(_final_entry_arr, _output_file_path, _input_bib_file):
     _bibtex_database = BibDatabase()
     _bibtex_database.entries = _final_entry_arr
 
-    writer = BibTexWriter()
+    _writer = BibTexWriter()
 
     with open(_output_file_path, 'w', encoding="utf-8") as bibtex_file:
-        bibtex_file.write(writer.write(_bibtex_database))
-        #bibtexparser.dump(bibtex_database_, bibtex_file)
+        bibtex_file.write(_writer.write(_bibtex_database))
     
-    print(f"\n\n\tThe output file has: "
-          f"\n\t {len(_bibtex_database.entries)} valid entries"
-          f"\n\t {len(_input_bib_file.entries) - len(_bibtex_database.entries)} have missing arguments."
-          f"\n\t with the respective modifications on: {modified_entries_}")
+    print(f"  -> The output file has: "
+          f"\n  -> {len(_bibtex_database.entries)} valid entries"
+          f"\n  -> {len(_input_bib_file.entries) - len(_bibtex_database.entries)} have missing arguments."
+          f"\n  -> with the respective modifications on: {modified_entries_}")
 
 def bib_parser_main(_input_file, _required_args):
 
-    _output_file = os.path.join(os.path.dirname(_input_file)+"_parsed", ".bib")
+    _output_dir_name = os.path.dirname(_input_file)
+    _output_file = os.path.join(_output_dir_name, f"{_output_dir_name}_parsed.txt")
 
     _modified_entries = {}
 

@@ -57,11 +57,11 @@ def request_data_crossref(doi_):
             entry_request_["abstract"] = abstract_cleaned
 
     except requests.exceptions.RequestException as e:
-        print(f"Error fetching data from CrossRef: {e}")
+        print(f"  -> Error fetching data from CrossRef: {e}")
     except json.JSONDecodeError:
-        print("Error decoding JSON response.")
+        print(f"  -> Error decoding JSON response.")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"  -> An error occurred: {e}")
 
     return entry_request_
 
