@@ -10,9 +10,9 @@ from bibtexparser.bibdatabase import BibDatabase
 from get_data_from_doi import get_data_from_doi_main
 
 # Definition of global variables
-_modified_entries = {}
+modified_entries_ = {}
 
-def bib_load_file(input_file_):
+def bib_load_file(_input_file):
 
     # Create the parser
     parser = BibTexParser(common_strings=False)
@@ -21,98 +21,95 @@ def bib_load_file(input_file_):
 
     # Open the .bib file with utf-8 encoding
     try:
-        with open(input_file_, 'r', encoding='utf-8') as bibtex_file_:
-            bibtex_str = bibtex_file_.read()
+        with open(_input_file, 'r', encoding='utf-8') as _bibtex_file_:
+            _bibtex_str = _bibtex_file_.read()
     except UnicodeDecodeError as e:
         print(f"\n\tError reading file: {e}")
         sys.exit(1)
 
-    bib_file_ = bibtexparser.loads(bibtex_str, parser=parser) 
+    _bib_file = bibtexparser.loads(_bibtex_str, parser=parser) 
 
-    return bib_file_
+    return _bib_file
 
 # Function to parse bibtex file
-def bib_error_checking(bib_file_):
+def bib_error_checking(_bib_file):
 
-    print(f"\n\t{len(bib_file_.entries)} entries"
-    f"\n\t{len(bib_file_.comments)} comments"
-    f"\n\t{len(bib_file_.strings)} strings and"
-    f"\n\t{len(bib_file_.preambles)} preambles")
+    print(f"\n\t{len(_bib_file.entries)} entries"
+    f"\n\t{len(_bib_file.comments)} comments"
+    f"\n\t{len(_bib_file.strings)} strings and"
+    f"\n\t{len(_bib_file.preambles)} preambles")
 
-    if(len(bib_file_.entries) == 0):
+    if(len(_bib_file.entries) == 0):
         print(f"\n\tThe parsed bibtex file has no entries to process.")
         sys.exit(1)
         
     print(f"\n\tThe bibtex file was successfully parsed.")
 
-def bib_arg_checking(bib_file_, required_args_):
+def bib_arg_checking(_bib_file, _required_args):
 
-    missing_args_ = []
-    final_entry_arr_ = []
-    i = 0
+    _missing_args = []
+    _final_entry_arr = []
+    _i = 0
 
     # Iterate over the entries dictionary
-    for entry_ in bib_file_.entries:
+    for _entry in _bib_file.entries:
         # Print actual entry in execution
-        print(f"Entry {i}/{len(bib_file_.entries)}")
+        print(f"Entry {_i}/{len(_bib_file.entries)}")
 
-        entry_id_ = entry_.get('id', 'unknown')
+        _entry_id = _entry.get('id', 'unknown')
 
-        for arg_ in required_args_:
+        for _arg in _required_args:
             
-            if arg_ not in entry_:
+            if _arg not in _entry:
                 #print(f"\n\tArgument [{arg_}] not in entry: {entry_id_}")
-                missing_args_.insert(len(missing_args_)-1, arg_)
+                _missing_args.insert(len(_missing_args)-1, _arg)
         
-        if len(missing_args_) > 0:
+        if len(_missing_args) > 0:
 
-            doi = entry_.get("doi", "")
+            doi = _entry.get("doi", "")
 
             # If the entry does not have a DOI, skip the search
             if len(doi) == 0:
-                print(f"\n\tThe entry {entry_id_} has no valid DOI, ignoring auto-fill")
-                final_entry_arr_.insert(len(final_entry_arr_)-1, entry_)
-                i += 1
+                print(f"\n\tThe entry {_entry_id} has no valid DOI, ignoring auto-fill")
+                _final_entry_arr.insert(len(_final_entry_arr)-1, _entry)
+                _i += 1
                 continue
             
             # Get data from doi in bibtex
             entry_data_ = get_data_from_doi_main(doi)
             
-            for missing_ in missing_args_:
-                if missing_ in entry_data_:
-                    entry_[missing_] = entry_data_[missing_]
-                    #_modified_entries[missing_] += 1
-                    #print(f"\n\t ** Added arg [{missing_}] to entry: {entry_id_}")
+            for _missing in _missing_args:
+                if _missing in entry_data_:
+                    _entry[_missing] = entry_data_[_missing]
         
         # Add the new entry to a new array of entries
-        final_entry_arr_.insert(len(final_entry_arr_)-1, entry_)
+        _final_entry_arr.insert(len(_final_entry_arr)-1, _entry)
 
         # Reset the array for missing arguments
-        missing_args_ = []
-        i += 1
+        _missing_args = []
+        _i += 1
 
-    return final_entry_arr_
+    return _final_entry_arr
 
-def bib_file_dump(final_entry_arr_, _output_file_path, input_bib_file_):
+def bib_file_dump(_final_entry_arr, _output_file_path, _input_bib_file):
 
-    bibtex_database_ = BibDatabase()
-    bibtex_database_.entries = final_entry_arr_
+    _bibtex_database = BibDatabase()
+    _bibtex_database.entries = _final_entry_arr
 
     writer = BibTexWriter()
 
     with open(_output_file_path, 'w', encoding="utf-8") as bibtex_file:
-        bibtex_file.write(writer.write(bibtex_database_))
+        bibtex_file.write(writer.write(_bibtex_database))
         #bibtexparser.dump(bibtex_database_, bibtex_file)
     
     print(f"\n\n\tThe output file has: "
-          f"\n\t {len(bibtex_database_.entries)} valid entries"
-          f"\n\t {len(input_bib_file_.entries) - len(bibtex_database_.entries)} have missing arguments."
-          f"\n\t with the respective modifications on: {_modified_entries}")
+          f"\n\t {len(_bibtex_database.entries)} valid entries"
+          f"\n\t {len(_input_bib_file.entries) - len(_bibtex_database.entries)} have missing arguments."
+          f"\n\t with the respective modifications on: {modified_entries_}")
 
-def bib_parser_main(input_file_, required_args_):
+def bib_parser_main(_input_file, _required_args):
 
-    _output_dir_name = os.path.dirname(_input_file)
-    _output_file_path = os.path.join(_output_dir_name, _output_file_name)
+    _output_file = os.path.join(os.path.dirname(_input_file)+"_parsed", ".bib")
 
     _modified_entries = {}
 
@@ -121,24 +118,23 @@ def bib_parser_main(input_file_, required_args_):
         _modified_entries[_arg] = 0
 
     # Load the bibtex file
-    bib_file_ = bib_load_file(input_file_)
+    _bib_file = bib_load_file(_input_file)
 
     # Execute error checking
-    bib_error_checking(bib_file_)
+    bib_error_checking(_bib_file)
 
     # Execute arg checking
-    final_entry_arr_ = bib_arg_checking(bib_file_, required_args_)
+    _final_entry_arr = bib_arg_checking(_bib_file, _required_args)
  
     # Write to a new file the whole content of the new bibtex file
-    bib_file_dump(final_entry_arr_, _output_file_path, bib_file_)
+    bib_file_dump(_final_entry_arr, _output_file, _bib_file)
 
 if __name__ == "__main__":
 
-    _input_file = sys.argv[1]
-    _required_args = sys.argv[2]
-    _output_file_name = sys.argv[3]
+    input_file_ = sys.argv[1]
+    required_args_ = sys.argv[2]
 
-    ## Test
-    _required_args = ["author", "title", "abstract", "year", "pages"]
+    ## Test for terminal request
+    required_args_ = ["author", "title", "abstract", "year", "pages"]
 
-    bib_parser_main(_input_file, _required_args)
+    bib_parser_main(input_file_, required_args_)
