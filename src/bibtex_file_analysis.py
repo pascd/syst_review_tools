@@ -44,6 +44,10 @@ if __name__ == "__main__":
                 
                 _merged_file = ""
                 
+                # Create the folder to store all files
+
+                os.makedirs()
+
                 try:
 
                     # Call the merger
@@ -64,12 +68,12 @@ if __name__ == "__main__":
 
                     # Call the parser
                     print("\n# Step 3: Parsing BibTeX entries")
-                    bib_parser_main(_merged_file, _required_args_options[_required_args])
+                    _parsed_file = bib_parser_main(_merged_file, _required_args_options[_required_args])
                     print("  -> Parsing completed")
 
                     # Call the short paper verification
                     print("\n# Step 4: Checking for short papers")
-                    check_short_papers_main(_merged_file, _min_pages_paper)
+                    check_short_papers_main(_parsed_file, _min_pages_paper)
                     print(f"  -> Short paper verification completed (minimum pages: {_min_pages_paper})")
 
                 except:

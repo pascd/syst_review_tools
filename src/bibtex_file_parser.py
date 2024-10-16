@@ -109,8 +109,15 @@ def bib_file_dump(_final_entry_arr, _output_file_path, _input_bib_file):
 
 def bib_parser_main(_input_file, _required_args):
 
-    _output_dir_name = os.path.dirname(_input_file)
-    _output_file = os.path.join(_output_dir_name, f"{_output_dir_name}_parsed.txt")
+    # Get the directory of the input file
+    _input_dir = os.path.dirname(_input_file)
+
+    # Get the file name without the extension
+    _base_name = os.path.splitext(os.path.basename(_input_file))[0]
+
+    # Create the output file name and path
+    _output_file_name = _base_name + "_parsed.bib"
+    _output_file = os.path.join(_input_dir, _output_file_name)
 
     _modified_entries = {}
 
@@ -129,6 +136,8 @@ def bib_parser_main(_input_file, _required_args):
  
     # Write to a new file the whole content of the new bibtex file
     bib_file_dump(_final_entry_arr, _output_file, _bib_file)
+
+    return _output_file
 
 if __name__ == "__main__":
 
