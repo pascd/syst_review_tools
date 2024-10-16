@@ -43,10 +43,6 @@ if __name__ == "__main__":
             if file_.endswith(".bib"):
                 
                 _merged_file = ""
-                
-                # Create the folder to store all files
-
-                os.makedirs()
 
                 try:
 
