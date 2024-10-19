@@ -66,7 +66,7 @@ def dump_short_papers(_short_papers, _output_file_path):
         _i = 0
         for _title in _short_papers:
             _i += 1
-            file.write(f"\n\n Paper {i}:" + _title)
+            file.write(f"\n\n Paper {_i}:" + _title)
 
 def check_short_papers_main(_input_file, _pages_threshold):
 
@@ -78,6 +78,8 @@ def check_short_papers_main(_input_file, _pages_threshold):
     _short_papers = find_short_papers(_bib_file_, _pages_threshold)
 
     dump_short_papers(_short_papers, _output_file_path)
+
+    return _output_file_path
 
 if __name__ == "__main__":
 

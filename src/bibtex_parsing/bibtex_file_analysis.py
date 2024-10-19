@@ -35,44 +35,51 @@ if __name__ == "__main__":
         print(f"  -> Path {_input_folder} is not a valid path for a folder.")
         sys.argv(1)
 
-    _bib_files_arr = []
+    _bib_files = 0
 
     for root, dirs, files in os.walk(_input_folder):
         for file_ in files:
 
             if file_.endswith(".bib"):
-                
-                _merged_file = ""
 
-                try:
+                _bib_files += 1
 
-                    # Call the merger
-                    print("\n# Step 1: Merging BibTeX files")
-                    _merged_file = merge_bibtex_main(root)
-                    print(f"  -> Merged file created: {_merged_file}")
+            print(f"  -> Folder {root} has {_bib_files} .bib files.")
 
-                    # Check if the returned merged file exists
-                    if not os.path.exists(_merged_file):
-                        print("It was not possible to return a valid path to a valid .bib file.")
-                        sys.exit(1)
-                    print("  -> Merged file verified: Exists and valid")
+        if _bib_files > 0:
 
-                    # Replace the months from string to int
-                    print("\n# Step 2: Replacing months from string to number format")
-                    replace_month_main(_merged_file)
-                    print("  -> Month replacement completed")
+            _merged_file = ""
 
-                    # Call the parser
-                    print("\n# Step 3: Parsing BibTeX entries")
-                    _parsed_file = bib_parser_main(_merged_file, _required_args_options[_required_args])
-                    print("  -> Parsing completed")
+            try:
+                # Call the merger
+                print("\n# Step 1: Merging BibTeX files")
+                _merged_file = merge_bibtex_main(root)
+                print(f"  -> Merged file created: {_merged_file}")
 
-                    # Call the short paper verification
-                    print("\n# Step 4: Checking for short papers")
-                    check_short_papers_main(_parsed_file, _min_pages_paper)
-                    print(f"  -> Short paper verification completed (minimum pages: {_min_pages_paper})")
+                # Check if the returned merged file exists
+                if not os.path.exists(_merged_file):
+                    print("It was not possible to return a valid path to a valid .bib file.")
+                    continue
+                print("  -> Merged file verified: Exists and valid")
 
-                except:
-                    if len(_merged_file) != 0:
-                        os.remove(_merged_file)
-                    sys.argv(1)
+                # Replace the months from string to int
+                print("\n# Step 2: Replacing months from string to number format")
+                replace_month_main(_merged_file)
+                print("  -> Month replacement completed")
+
+                # Call the parser
+                print("\n# Step 3: Parsing BibTeX entries")
+                _parsed_file = bib_parser_main(_merged_file, _required_args_options[_required_args])
+                print("  -> Parsing completed")
+
+                # Call the short paper verification
+                print("\n# Step 4: Checking for short papers")
+                _short_papers = check_short_papers_main(_parsed_file, _min_pages_paper)
+                print(f"  -> Short paper verification completed (minimum pages: {_min_pages_paper})")
+
+            except:
+                if len(_merged_file) != 0:
+                    os.remove(_merged_file)
+                    os.remove(_parsed_file)
+                    os.remove(_short_papers)
+                sys.argv(1)
