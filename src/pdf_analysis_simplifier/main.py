@@ -1,74 +1,73 @@
 import os
-from typing import Optional
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
-from pydantic import BaseModel
-from gpt_index import SimpleDirectoryReader, GPTSimpleVectorIndex, LLMPredictor, PromptHelper
-from langchain.chat_models import ChatOpenAI
+import fitz  # PyMuPDF
+from transformers import AutoTokenizer, AutoModelForCausalLM
+import torch
 
-# Load the OpenAI API key from environment variables
-OPENAI_KEY = os.getenv('OPENAI_API_KEY')
+# Load GPT-J model and tokenizer from Hugging Face
+model_name = "EleutherAI/gpt-j-6B"
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForCausalLM.from_pretrained(model_name)
 
-# choose model
-modelnames = ["gpt-3.5-turbo", "text-davinci-003"]
-modelname_index = 0
+# Function to extract text from PDF
+def extract_pdf_text(pdf_path):
+    doc = fitz.open(pdf_path)
+    text = ""
+    for page in doc:
+        text += page.get_text()
+    return text
 
-# choose documents
-docfolders = ["./docs"]
-doc_index = 0
+# Function to chunk text for token limit (2048 tokens max)
+def chunk_text(text, chunk_size=2048):
+    # Split the document text into smaller chunks to fit within the model's token limit
+    tokens = tokenizer.encode(text)
+    for i in range(0, len(tokens), chunk_size):
+        yield tokenizer.decode(tokens[i:i + chunk_size])
 
-def construct_index(directory_path):
-    max_input_size = 4096
-    num_outputs = 512
-    max_chunk_overlap = 20
-    chunk_size_limit = 600
+# Function to interact with GPT-J based on document content
+def chat_with_document(pdf_path, user_message):
+    # Extract text from the PDF
+    document_text = extract_pdf_text(pdf_path)
 
-    prompt_helper = PromptHelper(max_input_size, num_outputs, max_chunk_overlap, chunk_size_limit=chunk_size_limit)
+    # Chunk the document text if it's too long
+    document_chunks = list(chunk_text(document_text))
 
-    # Use the OpenAI key in the ChatOpenAI instance
-    llm_predictor = LLMPredictor(llm=ChatOpenAI(temperature=0.7, model_name=modelnames[modelname_index], max_tokens=num_outputs, openai_api_key=OPENAI_KEY))
+    # Process each chunk and get the response
+    full_answer = ""
+    for chunk in document_chunks:
+        prompt = f"Document: {chunk}\nUser: {user_message}\nAssistant:"
 
-    documents = SimpleDirectoryReader(directory_path).load_data()
+        # Tokenize and make sure to reset position indices by truncating the input
+        inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=2048)
 
-    index = GPTSimpleVectorIndex(documents, llm_predictor=llm_predictor, prompt_helper=prompt_helper)
+        # Ensure position indices are within the allowed range by resetting for each chunk
+        input_ids = inputs["input_ids"]
+        position_ids = torch.arange(input_ids.size(1), device=input_ids.device).unsqueeze(0)
+        inputs["position_ids"] = position_ids
 
-    index.save_to_disk('index.json')
+        # Generate the model's response
+        outputs = model.generate(**inputs, max_new_tokens=512, num_return_sequences=1, temperature=0.7)
+        response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+        full_answer += response.split("Assistant:")[-1].strip() + " "
 
-    return index
+    return full_answer.strip()
 
-def chatbot(input_text):
-    index = GPTSimpleVectorIndex.load_from_disk('index.json')
-    response = index.query(input_text, response_mode="compact")
-    return response.response
+# Function to process all PDF files in a folder
+def process_pdfs_in_folder(folder_path, user_message):
+    # List all PDF files in the folder
+    pdf_files = [f for f in os.listdir(folder_path) if f.lower().endswith(".pdf")]
 
-#########################
-app = FastAPI()
-origins = ['*']
+    # Process each PDF file
+    for pdf_filename in pdf_files:
+        pdf_path = os.path.join(folder_path, pdf_filename)
+        print(f"\nProcessing file: {pdf_filename}")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+        # Ask the question and get the answer for each file
+        answer = chat_with_document(pdf_path, user_message)
+        print(f"Answer for {pdf_filename}: {answer}")
 
-class Item(BaseModel):
-    source: str
-    question: str
+# Example usage
+folder_path = "./pdf-files/"  # Specify the folder where PDFs are stored
+user_message = "What are the main conclusions of this document?"  # The user's question
 
-@app.post('/ask')
-async def ask_question(question_data: Item):
-    question = question_data.question
-    response = chatbot(question)
-    return {'response': response}
-
-# Test route to check if the server is running
-@app.get('/')
-async def read_root():
-    return {"message": "Server is running. Use POST to /ask to interact with the chatbot."}
-
-if __name__ == "__main__":
-    #index = construct_index(docfolders[doc_index])
-    uvicorn.run("main:app", host="127.0.0.1", port=8001, reload=True)
+# Process all PDFs in the folder
+process_pdfs_in_folder(folder_path, user_message)

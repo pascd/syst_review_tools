@@ -1,0 +1,41 @@
+quality_assessment_questions:
+  - id: QE1
+    question: Is the methodology appropriate and adequately tailored to the specific challenges of disassembly tasks?
+    scores: [0.0, 0.5, 1.0]
+  - id: QE2
+    question: Is the proposed robotic cell or solution described in sufficient detail to understand its functionality and application?
+    scores: [0.0, 1.0, 2.0]
+  - id: QE3
+    question: Are the discussions of the results and conclusions thorough and well-supported by the data presented?
+    scores: [0.0, 0.5, 1.0]
+  - id: QE4
+    question: What type of research is conducted in the work (experimental, simulation, conceptual), and is this clearly stated?
+    scores: [0.0, 0.5, 1.0]
+  - id: QE5
+    question: Does the work’s implementation and/or the data used in the experiments are publicly available?
+    scores: [0.0, 1.0]
+  - id: QE6
+    question: Is the proposed solution focused on disassembly tasks?
+    scores: [0.0, 1.0]
+  - id: QE7
+    question: Does the paper present comparative results with other methods or ground-truth data to validate its findings?
+    scores: [0.0, 1.0]
+  - id: QE8
+    question: Does the paper provide an updated review of the state of the art in the process described for disassembly tasks?
+    scores: [0.0, 0.5, 1.0]
+
+data_extraction_fields:
+  - author: Name of the authors                                             # Full name(s) of the paper's author(s)
+  - year: Year of publication                                               # Year the paper was published
+  - number_of_manipulators: Number of manipulators used in the study        # Count of robotic arms or manipulators
+  - manipulator: Model of manipulator used                                  # Description of the robotic arm(s) or tool(s)
+  - vision_system: Details about the vision system used                     # Information about cameras, sensors, or vision algorithms
+  - use_of_cad_model: Whether a CAD model was used in the study             # Yes/No or details about the CAD model
+  - level_of_implementation: Conceptual/Experimental/Implemented            # Stage of the proposed solution
+  - level_of_automation: Collaborative Cell/Fully automated/Manual          # Degree of automation in the system
+  - process_steps: Type of disassembly steps performed                      # Description of the disassembly process
+  - efficiency_considerations: Cost/Time/Energy                             # Metrics used to evaluate efficiency
+  - optimization_of_disassembly_task: Disassembly steps/Task distribution   # Focus of optimization efforts
+  - challenges: Key challenges addressed in the paper                       # Summary of challenges faced and solved
+  - how_to: How the authors achieved their goals                            # Explanation of the methodology or approach
+  - results: Key findings or outcomes of the study                          # Summary of the results
