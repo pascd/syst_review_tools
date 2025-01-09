@@ -68,30 +68,24 @@ class WebAIChatInteraction(AutoWebInteraction):
             all_responses = self._driver.find_elements(by_method, identifier)
 
             if all_responses:
-                #last_message = all_responses[-1].text
-                for response in all_responses:
-                    logger.info(f"Last message: {response.text}")
-                return response
+                last_message = all_responses[-1].text
+                return last_message
 
         except Exception as e:
             logger.error(f"Failed to read last message: {e}")
         return None
 
-    def check_response_ended(self, by_method, identifier, timeout=60):
+    def check_response_ended(self, by_method, identifier, timeout):
         start_time = time.time()
-        while True:
-            try:
-                response_elements = self.find_elements(by_method, identifier)
-                if response_elements:
-                    logger.info("Response has ended.")
-                    break
-            except Exception as e:
-                logger.error(f"Error checking response: {e}")
-            if time.time() - start_time > timeout:
-                logger.warning("Timeout reached. Exiting response check.")
-                break
-            time.sleep(0.5)
-        time.sleep(1)
+        try:
+            while time.time() - start_time < timeout:
+                if not self.find_elements(by_method, identifier):
+                    return True
+                sleep(0.1)
+            return False
+        except Exception as e:
+            logger.error(f"Error waiting for element: {e}")
+            return False
 
     def init_new_chat(self, by_method, identifier):
         try:
