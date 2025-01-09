@@ -74,7 +74,10 @@ srv_gen/
 *.pyc
 
 #ignore pdfs
-#*.pdf
+*.pdf
+
+#ignore env files
+.env
 
 .idea/
 .vscode/
