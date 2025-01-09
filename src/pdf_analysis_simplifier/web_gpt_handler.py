@@ -61,6 +61,7 @@ class WebAIChatInteraction(AutoWebInteraction):
         except Exception as e:
             logger.error(f"Failed to send message: {e}")
 
+    # Find the "like" button to check if response has ended
     def read_last_message(self, by_method, identifier):
         try:
             # Get all responses
@@ -70,7 +71,7 @@ class WebAIChatInteraction(AutoWebInteraction):
                 #last_message = all_responses[-1].text
                 for response in all_responses:
                     logger.info(f"Last message: {response.text}")
-                return last_message
+                return response
 
         except Exception as e:
             logger.error(f"Failed to read last message: {e}")

@@ -79,6 +79,6 @@ srv_gen/
 #ignore env files
 .env
 
-.idea/
-.vscode/
-.cmake-build-debug/
+*.idea/
+*.vscode/
+*.cmake-build-debug/

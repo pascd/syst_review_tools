@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
         # Wait for response to finish and retrieve it
         try:
-            web_interaction.check_response_ended(By.CSS_SELECTOR, "div.text-base")
+            web_interaction.check_response_ended(By.CSS_SELECTOR, "button[data-testid='copy-turn-action-button']")
             response = web_interaction.read_last_message(By.CSS_SELECTOR, "div[data-message-author-role='assistant'] div.markdown.prose")
             logger.info(f"Response: {response}")
         except NoSuchElementException:
