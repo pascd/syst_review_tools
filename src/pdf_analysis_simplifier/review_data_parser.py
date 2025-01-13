@@ -26,16 +26,17 @@ class ReviewDataParser:
             return False
 
     # Get all questions for quality assessment
-    def get_all_questions(self):
+    def get_all_quality_assessment_fields(self):
         # Load data parameters into a variable
         data = self.load_yaml_file()
 
         # If the file is empty, return None
         if data is None:
-            return None
+            print("Error when loading yaml file")
+            return False
         else:
             qa_questions = data["quality_assessment_questions"]
-            return [qa_questions["id"],qa_questions["question"],qa_questions["scores"]]
+            return [{"id": q["id"], "question": q["question"], "scores": q["scores"]} for q in qa_questions]
 
     # Get all data extraction fields
     def get_all_data_extraction_fields(self):
@@ -44,6 +45,60 @@ class ReviewDataParser:
 
         # If the file is empty, return None
         if data is None:
-            return None
+            print("Error when loading yaml file")
+            return False
         else:
-            return data["data_extraction_fields"]
+            de_fields = data["data_extraction_fields"]
+            return [{"key": data["key"], "description": data["description"]} for data in de_fields]
+
+    # Retrieve the cutoff score from config file
+    def get_cutoff_score(self):
+        data = self.load_yaml_file()
+
+        if data is None:
+            print("Error when loading yaml file")
+            return False
+        else:
+            return data["cutoff_score"]
+
+    # Return prompt for quality assessment type: "qa" or "de"
+    def get_analysis_prompt(self):
+
+        prompt=""
+        prompt += "Hello ChatGPT, imagine you are a researcher, I want you to perform a systematic analysis on the following PDF. Please be consise, and exact following the next parameters. \n"
+
+        # Retrieve all analysis fields
+        qa_fields = self.get_all_quality_assessment_fields()
+        data_extraction_fields = self.get_all_data_extraction_fields()
+        cutoff_score = self.get_cutoff_score()
+
+        prompt += "The quality assessment quastions and scores are: \n"
+
+        if not qa_fields:
+            print("No questions found")
+            return False
+
+        for qa_field in qa_fields:
+            prompt += qa_field[id] + "\n" + qa_field["question"] + "\n" + qa_field["scores"] + "\n\n"
+
+        prompt += "And the respective data extraction fields below:\n\n"
+
+        if not data_extraction_fields:
+            print("No data extraction fields found")
+            return False
+
+        for data_field in data_extraction_fields:
+            for key, value in data_field.items():
+                prompt += f"{key}: {value}\n"
+
+        prompt += (f"In your answers, just include the ID of the quality assessment questions, a brief explanation of it and the score, something like this: \n"
+                   "QE1: brief explanation \n"
+                   "QE1 Score: score \n\n"
+                   f"For data extraction fields, if the sum of the scores is equal or higher to the cutoff score, which is equal to {cutoff_score}, give me an answer like this: \n"
+                   f"data_field_1: brief explanation \n"
+                   "data_field_2: brief explanation \n\n"
+                   "Plesase also return the score for the paper in the following format: \n"
+                   "#score: score \n"
+                   "and so on. Tank you for your help.")
+
+        return prompt

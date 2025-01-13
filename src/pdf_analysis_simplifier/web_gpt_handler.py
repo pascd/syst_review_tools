@@ -22,50 +22,25 @@ class WebAIChatInteraction(AutoWebInteraction):
         self.enter_in_webpage(url)
         logger.info(f"{url} webpage initiated.")
 
-    def find_element(self, by_method, identifier):
-        try:
-            element = self._driver.find_element(by_method, identifier)
-            logger.info(f"Element found using {by_method} with identifier '{identifier}'.")
-            return element
-        except Exception as e:
-            logger.error(f"Failed to find element using {by_method} with identifier '{identifier}': {e}")
-            return None
-
-    def find_elements(self, by_method, identifier):
-        try:
-            elements = self._driver.find_elements(by_method, identifier)
-            logger.info(f"Elements found using {by_method} with identifier '{identifier}'.")
-            return elements
-        except Exception as e:
-            logger.error(f"Failed to find elements using {by_method} with identifier '{identifier}': {e}")
-            return []
-
     def send_message(self, message, chat_input, submit_method, submit_identifier):
         try:
 
             self.send_content_to_element(chat_input, message)
             logger.info(f"Message sent: {message}")
 
-            # Find and click the submit button
-            submit_button = WebDriverWait(self._driver, 5).until(
-                EC.element_to_be_clickable((submit_method, submit_identifier))
-            )
-
-            if submit_button:
-                # Click the button
-                print("Send button found, clicking...")
-                self.click_into_element(submit_button)
+            if self.wait_and_click_element(chat_input, submit_method, submit_identifier):
+                logger.info(f"Submit button clicked: {message}")
             else:
                 # Alternatively, use ENTER key if no button is found
                 chat_input.send_keys(Keys.ENTER)
         except Exception as e:
             logger.error(f"Failed to send message: {e}")
 
-    # Find the "like" button to check if response has ended
+    # Find the "stop" button to check if response has ended
     def read_last_message(self, by_method, identifier):
         try:
             # Get all responses
-            all_responses = self._driver.find_elements(by_method, identifier)
+            all_responses = self._driver.find_element(by_method, identifier)
 
             if all_responses:
                 last_message = all_responses[-1].text
@@ -79,7 +54,7 @@ class WebAIChatInteraction(AutoWebInteraction):
         start_time = time.time()
         try:
             while time.time() - start_time < timeout:
-                if not self.find_elements(by_method, identifier):
+                if not self.find_element(by_method, identifier):
                     return True
                 sleep(0.1)
             return False

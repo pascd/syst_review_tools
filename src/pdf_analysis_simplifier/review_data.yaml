@@ -24,18 +24,36 @@ quality_assessment_questions:
     question: Does the paper provide an updated review of the state of the art in the process described for disassembly tasks?
     scores: [0.0, 0.5, 1.0]
 
+cutoff_score: 6.5
+
 data_extraction_fields:
-  - author: Name of the authors                                             # Full name(s) of the paper's author(s)
-  - year: Year of publication                                               # Year the paper was published
-  - number_of_manipulators: Number of manipulators used in the study        # Count of robotic arms or manipulators
-  - manipulator: Model of manipulator used                                  # Description of the robotic arm(s) or tool(s)
-  - vision_system: Details about the vision system used                     # Information about cameras, sensors, or vision algorithms
-  - use_of_cad_model: Whether a CAD model was used in the study             # Yes/No or details about the CAD model
-  - level_of_implementation: Conceptual/Experimental/Implemented            # Stage of the proposed solution
-  - level_of_automation: Collaborative Cell/Fully automated/Manual          # Degree of automation in the system
-  - process_steps: Type of disassembly steps performed                      # Description of the disassembly process
-  - efficiency_considerations: Cost/Time/Energy                             # Metrics used to evaluate efficiency
-  - optimization_of_disassembly_task: Disassembly steps/Task distribution   # Focus of optimization efforts
-  - challenges: Key challenges addressed in the paper                       # Summary of challenges faced and solved
-  - how_to: How the authors achieved their goals                            # Explanation of the methodology or approach
-  - results: Key findings or outcomes of the study                          # Summary of the results
+  - key: author
+    description: Name of the authors
+  - key: year
+    description: Year of publication
+  - key: number_of_manipulators
+    description: Number of manipulators used in the study
+  - key: manipulator
+    description: Model of manipulator used
+  - key: automated_cell_components
+    description: Components that compose the automated cell
+  - key: vision_system
+    description: Details about the vision system used
+  - key: use_of_cad_model
+    description: Whether a CAD model was used in the study
+  - key: level_of_implementation
+    description: Conceptual/Experimental/Implemented
+  - key: level_of_automation
+    description: Collaborative Cell/Fully automated/Manual
+  - key: process_steps
+    description: Type of disassembly steps performed
+  - key: efficiency_considerations
+    description: Cost/Time/Energy
+  - key: optimization_of_disassembly_task
+    description: Disassembly steps/Task distribution
+  - key: challenges
+    description: Key challenges addressed in the paper
+  - key: how_to
+    description: How the authors achieved their goals
+  - key: results
+    description: Key findings or outcomes of the study

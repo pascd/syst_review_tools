@@ -6,6 +6,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import logging
+import time
 
 # Dynamically add the root directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
@@ -60,3 +61,11 @@ class ChatGPTInteractionManager:
         except NoSuchElementException:
             logger.error("Failed to read the response. Please check the webpage layout.")
             return False
+
+    # Input a file into the chat
+    def input_external_file(self, file_path):
+        time.sleep(2)
+        self.driver.drag_and_drop_file_into_element(file_path=file_path,
+                                                    by_method=By.CSS_SELECTOR,
+                                                    identifier="div#prompt-textarea")
+        time.sleep(1)

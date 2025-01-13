@@ -5,6 +5,8 @@ from fake_useragent import UserAgent
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
+from selenium.webdriver.common.action_chains import ActionChains
+import base64
 
 class AutoWebInteraction:
     # Initialize the WebDriver
@@ -82,6 +84,48 @@ class AutoWebInteraction:
             print(f"Failed to click element with JavaScript: {e}")
             return False
 
-    # Close the browser
+    # Drag-and-Drop file into a webpage
+    def drag_and_drop_file_into_element(self, file_path, by_method, identifier):
+        try:
+            # Read the file content and encode it as a base64 string
+            with open(file_path, "rb") as file:
+                file_content = base64.b64encode(file.read()).decode("utf-8")
+
+            element = self.find_element(by_method, identifier)
+
+            # JavaScript to simulate file drop with actual file content
+            js_script = """
+            const fileContent = atob(arguments[0]);
+            const fileBlob = new Blob([fileContent], { type: 'application/octet-stream' });
+            const file = new File([fileBlob], arguments[1], { type: 'application/octet-stream' });
+    
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+    
+            const dropEvent = new DragEvent('drop', {
+                bubbles: true,
+                dataTransfer: dataTransfer
+            });
+            arguments[2].dispatchEvent(dropEvent);
+            """
+
+            # Execute the JavaScript
+            self._driver.execute_script(js_script, file_content, file_path, element)
+            return True
+        except Exception as e:
+            print(f"Failed to drag and drop file: {e}")
+            return False
+
+    # Find an element in the webpage
+    def find_element(self, by_method, identifier):
+        try:
+            element = self._driver.find_element(by_method, identifier)
+            print(f"Element found using {by_method} with identifier '{identifier}'.")
+            return element
+        except Exception as e:
+            print(f"Failed to find element using {by_method} with identifier '{identifier}': {e}")
+            return None
+
+# Close the browser
     def close(self):
         self._driver.quit()
