@@ -8,6 +8,11 @@ from selenium.common.exceptions import NoSuchElementException, WebDriverExceptio
 from selenium.webdriver.common.action_chains import ActionChains
 import base64
 import os
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class AutoWebInteraction:
     # Initialize the WebDriver
@@ -149,6 +154,15 @@ class AutoWebInteraction:
         except Exception as e:
             print(f"Failed to find element using {by_method} with identifier '{identifier}': {e}")
             return None
+
+    def find_elements(self, by_method, identifier):
+        try:
+            elements = self._driver.find_elements(by_method, identifier)
+            logger.info(f"Elements found using {by_method} with identifier '{identifier}'.")
+            return elements
+        except Exception as e:
+            logger.error(f"Failed to find elements using {by_method} with identifier '{identifier}': {e}")
+            return []
 
 # Close the browser
     def close(self):

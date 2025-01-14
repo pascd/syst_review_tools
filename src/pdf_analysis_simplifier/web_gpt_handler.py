@@ -40,7 +40,7 @@ class WebAIChatInteraction(AutoWebInteraction):
     def read_last_message(self, by_method, identifier):
         try:
             # Get all responses
-            all_responses = self._driver.find_element(by_method, identifier)
+            all_responses = self.find_elements(by_method, identifier)
 
             if all_responses:
                 last_message = all_responses[-1].text
@@ -54,7 +54,7 @@ class WebAIChatInteraction(AutoWebInteraction):
         start_time = time.time()
         try:
             while time.time() - start_time < timeout:
-                if not self.find_element(by_method, identifier):
+                if not self.find_elements(by_method, identifier):
                     return True
                 sleep(0.1)
             return False
