@@ -2,12 +2,13 @@ import os
 import sys
 import pandas as pd
 import re
-from time import sleep
+import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import logging
+import shutil
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -20,11 +21,12 @@ from src.pdf_analysis_simplifier.chatgpt_interaction_manager import ChatGPTInter
 from src.pdf_analysis_simplifier.review_data_parser import ReviewDataParser
 
 class PDFToExcelProcessor:
-    def __init__(self, pdf_folder_path, excel_file_path, review_config, qa_sheet_name, de_sheet_name):
+    def __init__(self, pdf_folder_path, analysed_folder_path, excel_file_path, review_config, qa_sheet_name, de_sheet_name):
         self.pdf_folder_path = pdf_folder_path
         self.excel_file_path = excel_file_path
         self.qa_sheet_name = qa_sheet_name
         self.de_sheet_name = de_sheet_name
+        self.analysed_folder_path = analysed_folder_path
         self.chatgpt_manager = ChatGPTInteractionManager()
         self.response_handler = ResponseHandler()
         self.excel_parser = ExcelDataParser(excel_file_path)
@@ -43,7 +45,17 @@ class PDFToExcelProcessor:
 
     # Iterate over all pdfs in folder, and return list with all pdf paths
     def get_pdf_paths(self):
-        return [f for f in os.listdir(self.pdf_folder_path) if f.lower().endswith(".pdf")]
+        # Ensure the folder path exists
+        if not os.path.exists(self.pdf_folder_path):
+            raise FileNotFoundError(f"The folder '{self.pdf_folder_path}' does not exist.")
+
+        # Get the absolute path of the folder
+        pdf_folder_path = os.path.abspath(self.pdf_folder_path)
+
+        # List all files in the folder and filter for PDFs
+        pdf_files = [os.path.join(pdf_folder_path, f) for f in os.listdir(pdf_folder_path) if f.lower().endswith(".pdf")]
+
+        return pdf_files
 
     # Send pdf and wait for response
     def send_pfd_to_analysis(self, pdf_file):
@@ -52,13 +64,18 @@ class PDFToExcelProcessor:
     # Extract the text associated with a specific identifier
     def extract_data_from_response(self, response, identifiers):
         extracted_data = {}
-        for identifier in identifiers:
-            extracted_text = self.response_handler.extract_by_identifier(response=response, identifier=identifier)
-            if extracted_text:
-                extracted_data[identifier] = extracted_text
-            else:
-                logger.warning(f"No text found for identifier: {identifier}")
-        return extracted_data
+        try:
+            for identifier in identifiers:
+                extracted_text = self.response_handler.extract_by_identifier(response=response, identifier=identifier)
+
+                if extracted_text:
+                    extracted_data[identifier] = extracted_text
+                else:
+                    logger.warning(f"No text found for identifier: {identifier}")
+                    return None
+            return extracted_data
+        except:
+            logger.warning(f"Error retrieving data from identifiers)")
 
     # Write the retrieved data for all identifiers in Excel file
     def write_data_to_excel(self, extracted_data, sheet_name):
@@ -72,6 +89,12 @@ class PDFToExcelProcessor:
             df.to_excel(writer, sheet_name=sheet_name, index=False)
 
         return True
+
+    # Move analysed files from source folder to other folder
+    def move_analysed_files(self):
+        if not os.path.isdir(self.analysed_folder_path):
+            return True
+
 
 
     # Run the sequence for PDF analysis
@@ -96,8 +119,12 @@ class PDFToExcelProcessor:
             # Input the file
             self.chatgpt_manager.input_external_file(file_path=pdf_path)
 
+            time.sleep(2)
+
             # Send pdf to analysis and retrieve answer
             response = self.send_pfd_to_analysis(self.review_parser.get_analysis_prompt())
+
+            time.sleep(2)
 
             # Extract the desired content from response
             extracted_qa_data = self.extract_data_from_response(response, qa_identifiers)
@@ -109,16 +136,22 @@ class PDFToExcelProcessor:
                 print(f"No data found for Quality Assessment analysis.")
 
             # If the article passed the cutoff score, retrieve data extraction information
-            paper_score = self.extract_data_from_response(response, self.data_extraction_fields["#score"])
+            paper_score = self.extract_data_from_response(response, "#score")
 
-            if paper_score >= self.cutoff_score:
-                # Extract the desired content from response
-                extracted_de_data = self.extract_data_from_response(response, de_fields)
+            if paper_score:
 
-                if extracted_de_data:
-                    self.write_data_to_excel(extracted_data=extracted_de_data, sheet_name=self.de_sheet_name)
+                if paper_score >= self.cutoff_score:
+                    # Extract the desired content from response
+                    extracted_de_data = self.extract_data_from_response(response, de_fields)
+
+                    if extracted_de_data:
+                        self.write_data_to_excel(extracted_data=extracted_de_data, sheet_name=self.de_sheet_name)
+                    else:
+                        print(f"No data found for Data Extraction analysis.")
                 else:
-                    print(f"No data found for Data Extraction analysis.")
+                    print("Paper has a score lower than the cutoff score.")
+                    time.sleep(2)
+                    continue
             else:
-                print("Paper has a score lower than the cutoff score.")
-                continue
+                print("No score found for specific paper")
+                break

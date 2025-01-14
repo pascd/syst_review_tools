@@ -11,6 +11,7 @@ if __name__ == "__main__":
 
     pdf_to_excel_processor = PDFToExcelProcessor(pdf_folder_path="./pdf-files/",
                                                  excel_file_path="/home/pedrodias/Documents/git-repos/syst_review_tools/src/pdf_analysis_simplifier/excel-files/analysis_excel_file.xlsx",
+                                                 analysed_folder_path="/home/pedrodias/Documents/git-repos/syst_review_tools/src/pdf_analysis_simplifier/analysed_files/",
                                                  qa_sheet_name="qa_sheet",
                                                  de_sheet_name="de_sheet",
                                                  review_config="./review_data.yaml")

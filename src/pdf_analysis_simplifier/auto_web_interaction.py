@@ -7,6 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
 from selenium.webdriver.common.action_chains import ActionChains
 import base64
+import os
 
 class AutoWebInteraction:
     # Initialize the WebDriver
@@ -87,30 +88,53 @@ class AutoWebInteraction:
     # Drag-and-Drop file into a webpage
     def drag_and_drop_file_into_element(self, file_path, by_method, identifier):
         try:
-            # Read the file content and encode it as a base64 string
-            with open(file_path, "rb") as file:
-                file_content = base64.b64encode(file.read()).decode("utf-8")
 
+            with open(file_path, "rb") as file:
+                file_content = file.read()
+
+            # Read and encode the file content
+            file_content = base64.b64encode(file_content).decode("utf-8")
+            if file_content is None:
+                print("Failed to read file content.")
+                return False
+
+            # Get the file name (without the full path)
+            file_name = os.path.basename(file_path)
+
+            # Locate the drop area element
             element = self.find_element(by_method, identifier)
 
             # JavaScript to simulate file drop with actual file content
             js_script = """
-            const fileContent = atob(arguments[0]);
-            const fileBlob = new Blob([fileContent], { type: 'application/octet-stream' });
-            const file = new File([fileBlob], arguments[1], { type: 'application/octet-stream' });
-    
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(file);
-    
-            const dropEvent = new DragEvent('drop', {
-                bubbles: true,
-                dataTransfer: dataTransfer
-            });
-            arguments[2].dispatchEvent(dropEvent);
-            """
+        // Decode the base64 content
+        const fileContent = atob(arguments[0]);
+
+        // Convert the decoded content to a Uint8Array
+        const uint8Array = new Uint8Array(fileContent.length);
+        for (let i = 0; i < fileContent.length; i++) {
+            uint8Array[i] = fileContent.charCodeAt(i);
+        }
+
+        // Create a Blob from the Uint8Array
+        const fileBlob = new Blob([uint8Array], { type: 'application/pdf' });
+
+        // Create a File object
+        const file = new File([fileBlob], arguments[1], { type: 'application/pdf' });
+
+        // Create a DataTransfer object and add the file
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+
+        // Dispatch the drop event
+        const dropEvent = new DragEvent('drop', {
+            bubbles: true,
+            dataTransfer: dataTransfer
+        });
+        arguments[2].dispatchEvent(dropEvent);
+        """
 
             # Execute the JavaScript
-            self._driver.execute_script(js_script, file_content, file_path, element)
+            self._driver.execute_script(js_script, file_content, file_name, element)
             return True
         except Exception as e:
             print(f"Failed to drag and drop file: {e}")
