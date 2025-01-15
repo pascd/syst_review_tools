@@ -27,35 +27,35 @@ quality_assessment_questions:
 cutoff_score: 6.5
 
 data_extraction_fields:
-  - key: title
+  - key: Title
     description: Title of the paper.
-  - key: author
+  - key: Author
     description: Name of the authors that wrote the paper.
-  - key: year
+  - key: Year
     description: Year of publication
-  - key: number_of_manipulators
+  - key: Number of manipulators
     description: Number of manipulators used in the study.
-  - key: manipulator
+  - key: Manipulator
     description: Model of manipulator used.
-  - key: automated_cell_components
+  - key: Automated Cell Components
     description: Components that compose the automated cell.
-  - key: vision_system
+  - key: Vision System
     description: Details about the vision system used
-  - key: use_of_cad_model
+  - key: Use of CAD model
     description: Whether a CAD model was used in the study.
-  - key: level_of_implementation
+  - key: Level of Implementation
     description: Conceptual/Experimental/Implemented.
-  - key: level_of_automation
+  - key: Level of Automation
     description: Collaborative Cell/Fully automated/Manual.
-  - key: process_steps
+  - key: Process Steps
     description: Type of disassembly steps performed.
-  - key: efficiency_considerations
+  - key: Efficiency Considerations
     description: Cost/Time/Energy.
-  - key: optimization_of_disassembly_task
+  - key: Optimization of Disassembly Task
     description: Disassembly steps/Task distribution.
-  - key: challenges
+  - key: Challenges
     description: Key challenges addressed in the paper.
-  - key: how_to
+  - key: How to
     description: How the authors achieved their goals.
-  - key: results
+  - key: Results
     description: Key findings or outcomes of the study.

@@ -100,3 +100,35 @@ class ExcelDataParser:
 
         # Save changes to the file
         self.save_workbook()
+
+    def fill_excel_with_data(self, sheet_name, data):
+
+        # Ensure the sheet exists
+        if sheet_name not in self.workbook.sheetnames:
+            print(f"Sheet '{sheet_name}' does not exist. Creating it...")
+            self.workbook.create_sheet(sheet_name)
+            self.save_workbook()
+
+        # Get existing column names
+        headers = self.get_column_names(sheet_name)
+
+        # Add new columns if they don't exist
+        for column_name in data.keys():
+            if column_name not in headers:
+                print(f"Adding new column '{column_name}'...")
+                self.add_new_column(sheet_name, column_name)
+
+        # Update headers after adding new columns
+        headers = self.get_column_names(sheet_name)
+
+        # Find the next empty row
+        sheet = self.workbook[sheet_name]
+        next_row = sheet.max_row + 1 if sheet.max_row > 1 else 2
+
+        # Write data to the appropriate columns
+        for column_name, value in data.items():
+            column_index = headers.index(column_name) + 1  # Convert to 1-based index
+            self.write_in_cell(sheet_name, row=next_row, column=column_index, cell_value=value)
+
+        # Save changes to the file
+        self.save_workbook()

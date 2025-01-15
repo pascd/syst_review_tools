@@ -95,8 +95,6 @@ class PDFToExcelProcessor:
         if not os.path.isdir(self.analysed_folder_path):
             return True
 
-
-
     # Run the sequence for PDF analysis
     def run(self):
 
@@ -127,25 +125,26 @@ class PDFToExcelProcessor:
             time.sleep(2)
 
             # Extract the desired content from response
-            extracted_qa_data = self.extract_data_from_response(response, qa_identifiers)
+
+            extracted_qa_data = self.review_parser.get_quality_assessment_text(response=response)
 
             if extracted_qa_data:
                 # Write the extracted data into the Excel file
-                self.write_data_to_excel(extracted_data=extracted_qa_data, sheet_name=self.qa_sheet_name)
+                self.excel_parser.fill_excel_with_data(data=extracted_qa_data, sheet_name=self.qa_sheet_name)
             else:
                 print(f"No data found for Quality Assessment analysis.")
 
             # If the article passed the cutoff score, retrieve data extraction information
-            paper_score = self.extract_data_from_response(response, "#score")
+            paper_score = self.review_parser.get_score_text(response, "#score")
 
             if paper_score:
 
                 if paper_score >= self.cutoff_score:
                     # Extract the desired content from response
-                    extracted_de_data = self.extract_data_from_response(response, de_fields)
+                    extracted_de_data = self.review_parser.get_data_extraction_text(response=response)
 
                     if extracted_de_data:
-                        self.write_data_to_excel(extracted_data=extracted_de_data, sheet_name=self.de_sheet_name)
+                        self.excel_parser.fill_excel_with_data(data=extracted_de_data, sheet_name=self.de_sheet_name)
                     else:
                         print(f"No data found for Data Extraction analysis.")
                 else:

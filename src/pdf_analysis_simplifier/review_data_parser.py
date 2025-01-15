@@ -1,10 +1,14 @@
 import os
 import yaml
+from pandas.io.xml import preprocess_data
+
+from src.pdf_analysis_simplifier.response_handler import ResponseHandler
 
 class ReviewDataParser:
 
     def __init__(self, config):
         self.config = config
+        self.response_handler = ResponseHandler()
 
     # Load YAML file
     def load_yaml_file(self):
@@ -107,3 +111,64 @@ class ReviewDataParser:
         prompt = prompt.replace("\n", " ")
 
         return prompt
+
+    # Retrieve all quality assessment descriptions
+    def get_quality_assessment_text(self, response):
+        qa_data = {}
+        for i in self.get_all_quality_assessment_fields():  # Assuming there are QE1 to QE8
+            qe_key = f"QE{i}"
+            qe_score_key = f"{qe_key} Score"
+
+            qe_description = self.response_handler.extract_by_identifier(response, qe_key)
+            qe_score = self.response_handler.extract_by_identifier(response, qe_score_key)
+
+            if qe_description and qe_score:
+                qa_data[qe_key] = {
+                    "Description": qe_description,
+                    "Score": qe_score
+                }
+
+        return self.preprocess_qa_data(qa_data)
+
+    def get_data_extraction_text(self, response):
+        de_data = {}
+        de_fields = self.get_all_data_extraction_fields()  # Get all data extraction fields from the YAML config
+
+        if not de_fields:
+            print("No data extraction fields found in the YAML configuration.")
+            return de_data
+
+        for field in de_fields:
+            field_key = field["key"]  # e.g., "Title", "Author", "Year", etc.
+            field_value = self.response_handler.extract_by_identifier(response, field_key)
+
+            if field_value:
+                de_data[field_key] = field_value
+            else:
+                print(f"Warning: No value found for data extraction field '{field_key}'.")
+
+        return de_data
+
+    def get_score_text(self, response, identifier):
+
+        # Use the ResponseHandler to extract the score
+        score_text = self.response_handler.extract_by_identifier(response, identifier)
+
+        if score_text:
+            try:
+                # Convert the extracted score text to a float
+                return float(score_text)
+            except ValueError:
+                print(f"Error: The extracted score '{score_text}' is not a valid number.")
+                return None
+        else:
+            print(f"Error: No score found with identifier '{identifier}'.")
+            return None
+
+    def preprocess_qa_data(self, qa_data):
+
+        flat_data = {}
+        for qe_key, qe_info in qa_data.items():
+            flat_data[qe_key] = qe_info["Description"]
+            flat_data[f"{qe_key} Score"] = qe_info["Score"]
+        return flat_data
