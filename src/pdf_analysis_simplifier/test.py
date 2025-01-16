@@ -81,7 +81,6 @@ if __name__ == '__main__':
     qa_data = review_parser.get_quality_assessment_text(response)
     paper_score = qa_data.pop("Total Score", 0)
     if qa_data:
-        print(qa_data)
         excel_parser.fill_excel_with_data(qa_sheet_name, {**qa_data, "Total Score": paper_score})
         print(f"Total QA Score: {paper_score}")
     else:
@@ -95,3 +94,4 @@ if __name__ == '__main__':
             excel_parser.fill_excel_with_data(de_sheet_name, de_data)
         else:
             print(f"No DE data found for response.")
+

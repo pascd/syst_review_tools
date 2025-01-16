@@ -109,7 +109,7 @@ class ReviewDataParser:
             question_id, description, score = match
             score = float(score.strip())
             qa_data[question_id] = {
-                f"{question_id}": description.strip(),
+                f"{question_id}": description.strip().replace('"', ""),
                 "Score": score
             }
             total_score += score
@@ -134,6 +134,9 @@ class ReviewDataParser:
         for line in de_lines:
             if ":" in line:
                 key, value = map(str.strip, line.split(":", 1))
+                # Remove double quotes from both key and value
+                key = key.replace('"', "")
+                value = value.replace('"', "")
                 de_data[key] = value
 
         return de_data
