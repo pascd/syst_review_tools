@@ -1,6 +1,5 @@
 import os
 from openpyxl import load_workbook, Workbook
-import pandas as pd
 
 class ExcelDataParser:
 
@@ -8,127 +7,98 @@ class ExcelDataParser:
         self.excel_file_path = excel_file_path
         if not os.path.exists(self.excel_file_path):
             raise FileNotFoundError(f"The file '{self.excel_file_path}' does not exist.")
-        # Load the Excel file with openpyxl
         self.workbook = load_workbook(self.excel_file_path)
 
-    # Create an Excel file
     def create_excel_file(self, sheet_name="Sheet1"):
-        # If file exists
         try:
-
             self.workbook = load_workbook(self.excel_file_path)
         except FileNotFoundError:
             self.workbook = Workbook()
             self.workbook.remove(self.workbook.active)
+            self.workbook.create_sheet(sheet_name)
+            self.save_workbook()
 
-    # Create a new sheet in an existing Excel file
     def create_excel_sheet(self, sheet_name):
-        sheet = self.workbook.active
-        sheet.title = sheet_name
+        if sheet_name not in self.workbook.sheetnames:
+            self.workbook.create_sheet(sheet_name)
         self.save_workbook()
 
     def save_workbook(self):
         self.workbook.save(self.excel_file_path)
 
-    # Create the Excel file based on the identifiers given
     def apply_excel_template(self, sheet_name, identifiers):
-
-        # Ensure the sheet exists
         if sheet_name not in self.workbook.sheetnames:
-            print(f"Sheet '{sheet_name}' does not exist. Creating it...")
-            self.workbook.create_sheet(sheet_name)
-        else:
-            print(f"Sheet '{sheet_name}' already exists.")
+            self.create_excel_sheet(sheet_name)
 
-        # Get existing column names
-        existing_headers = self.get_column_names(sheet_name)
+        headers = self.get_column_names(sheet_name)
 
-        # Find the starting column index for new identifiers
-        start_col_index = len(existing_headers) + 1
-
-        # Add new identifiers as column names
         for i, identifier in enumerate(identifiers):
-            column_index = start_col_index + i
-            # Write identifier in the first row of the column
-            self.write_in_cell(sheet_name=sheet_name, row=1, column=column_index, cell_value=identifier)
+            start_col_index = i + 1
+            if identifier not in headers:
+                self.write_in_cell(sheet_name, row=1, column=start_col_index, cell_value=identifier)
 
-        # Save changes to the file
         self.save_workbook()
 
-    # Retrieve column values in a list
     def get_column_values(self, sheet_name, column):
         sheet = self.workbook[sheet_name]
-        # Convert column index (e.g., "A") to rows of values
         return [sheet[f"{column}{row}"].value for row in range(1, sheet.max_row + 1)]
 
-    # Retrieve column names in a list
     def get_column_names(self, sheet_name):
         sheet = self.workbook[sheet_name]
-        # Assuming first row contains headers
-        return [cell.value for cell in sheet[1]]
+        return [cell.value for cell in next(sheet.iter_rows(min_row=1, max_row=sheet.max_row))]
 
-    # Write to a specific cell
-    def write_in_cell(self, sheet_name, column, row, cell_value):
+    def write_in_cell(self, sheet_name, row, column, cell_value):
         sheet = self.workbook[sheet_name]
-        # Write the value to the specified cell
         sheet.cell(row=row, column=column, value=cell_value)
-        #self.workbook.save(self.excel_file_path)
 
-    # Rename a column
     def rename_column(self, sheet_name, old_column_name, new_column_name):
-        sheet = self.workbook[sheet_name]
         headers = self.get_column_names(sheet_name)
         if old_column_name not in headers:
             raise ValueError(f"Column '{old_column_name}' does not exist.")
-        # Update the header row
         column_index = headers.index(old_column_name) + 1
-        sheet.cell(row=1, column=column_index, value=new_column_name)
+        self.write_in_cell(sheet_name, row=1, column=column_index, cell_value=new_column_name)
 
-        # Save changes to the file
-        self.save_workbook()
-
-    # Add a new column
     def add_new_column(self, sheet_name, column_name, default_value=None):
-        sheet = self.workbook[sheet_name]
         headers = self.get_column_names(sheet_name)
+        if column_name in headers:
+            print(f"Column '{column_name}' already exists.")
+            return
         new_col_index = len(headers) + 1
-        # Add header
-        sheet.cell(row=1, column=new_col_index, value=column_name)
-        # Fill the new column with the default value
+        self.write_in_cell(sheet_name, row=1, column=new_col_index, cell_value=column_name)
+        sheet = self.workbook[sheet_name]
         for row in range(2, sheet.max_row + 1):
             sheet.cell(row=row, column=new_col_index, value=default_value)
 
-        # Save changes to the file
         self.save_workbook()
 
     def fill_excel_with_data(self, sheet_name, data):
 
-        # Ensure the sheet exists
+        # Check if the sheet exists, create it if not
         if sheet_name not in self.workbook.sheetnames:
-            print(f"Sheet '{sheet_name}' does not exist. Creating it...")
-            self.workbook.create_sheet(sheet_name)
-            self.save_workbook()
+            self.create_excel_sheet(sheet_name)
 
-        # Get existing column names
+        # Retrieve all headers
         headers = self.get_column_names(sheet_name)
 
-        # Add new columns if they don't exist
+        sheet = self.workbook[sheet_name]
+
+        # Ensure all keys in data exist as headers
         for column_name in data.keys():
             if column_name not in headers:
-                print(f"Adding new column '{column_name}'...")
                 self.add_new_column(sheet_name, column_name)
+                headers = self.get_column_names(sheet_name)  # Update headers after adding a new column
 
-        # Update headers after adding new columns
-        headers = self.get_column_names(sheet_name)
-
-        # Find the next empty row
-        sheet = self.workbook[sheet_name]
-        next_row = sheet.max_row + 1 if sheet.max_row > 1 else 2
-
-        # Write data to the appropriate columns
+        # Write data to the next available row in each column
         for column_name, value in data.items():
-            column_index = headers.index(column_name) + 1  # Convert to 1-based index
-            self.write_in_cell(sheet_name, row=next_row, column=column_index, cell_value=value)
+            column_index = headers.index(column_name) + 1  # Convert header index to 1-based column index
 
-        # Save changes to the file
+            # Find the next empty cell in the column
+            for row in range(2, sheet.max_row + 2):  # Start at row 2 to skip headers
+                if sheet.cell(row=row, column=column_index).value is None:
+                    self.write_in_cell(sheet_name, row=row, column=column_index, cell_value=value)
+                    break
+
+        # Save the workbook after writing data
         self.save_workbook()
+
+

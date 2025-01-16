@@ -5,6 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.webdriver.common.keys import Keys
 import logging
 import time
 
@@ -32,24 +33,36 @@ class ChatGPTInteractionManager:
         return True
 
     def send_and_receive(self, message):
-        # Activate the textarea
-        textarea = self.driver.activate_text_area(
+
+        # Locate the chat input
+        chat_input = self.driver.activate_text_area(
             by_method=By.CSS_SELECTOR,
             text_identifier="div#prompt-textarea"
         )
 
-        if not textarea:
-            logger.error("Could not activate textarea. Exiting.")
+        if not chat_input:
+            logger.error("Could not activate chat input. Exiting.")
             return False
 
-        # Input prompt and send message
+        # Input the message in the chat input
         try:
-            self.driver.send_message(chat_input=textarea,
-                                     message=message,
-                                     submit_method=By.CSS_SELECTOR,
-                                     submit_identifier="button[data-testid='send-button']")
-        except TimeoutException:
-            logger.error("Send button not found. Exiting.")
+            chat_input.send_keys(message)
+            logger.info(f"Message entered: {message}")
+        except Exception as e:
+            logger.error(f"Failed to enter message: {e}")
+            return False
+
+        # Wait and click the submit button
+        try:
+            if not self.driver.wait_and_click_element(
+                    by=By.CSS_SELECTOR,
+                    value="button[data-testid='send-button']",
+                    timeout=60
+            ):
+                logger.warning("Failed to click the submit button. Using ENTER key as fallback.")
+                chat_input.send_keys(Keys.ENTER)
+        except Exception as e:
+            logger.error(f"Error while trying to click submit button: {e}")
             return False
 
         # Wait for response to finish and retrieve it
@@ -61,6 +74,7 @@ class ChatGPTInteractionManager:
         except NoSuchElementException:
             logger.error("Failed to read the response. Please check the webpage layout.")
             return False
+
 
     # Input a file into the chat
     def input_external_file(self, file_path):

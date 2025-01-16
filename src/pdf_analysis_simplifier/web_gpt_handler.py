@@ -24,15 +24,20 @@ class WebAIChatInteraction(AutoWebInteraction):
 
     def send_message(self, message, chat_input, submit_method, submit_identifier):
         try:
+            # Locate the chat input and send the message
+            chat_input = WebDriverWait(self._driver, 60).until(
+                EC.presence_of_element_located((submit_method, submit_identifier))
+            )
+            chat_input.send_keys(message)
+            logger.info(f"Message entered: {message}")
 
-            self.send_content_to_element(chat_input, message)
-            logger.info(f"Message sent: {message}")
-
-            if self.wait_and_click_element(chat_input, submit_method, submit_identifier):
-                logger.info(f"Submit button clicked: {message}")
+            # Wait and click the submit button
+            if self.wait_and_click_element(submit_method, submit_identifier):
+                logger.info(f"Submit button clicked successfully for message: {message}")
             else:
-                # Alternatively, use ENTER key if no button is found
+                logger.warning("Failed to find and click the submit button. Using ENTER key.")
                 chat_input.send_keys(Keys.ENTER)
+
         except Exception as e:
             logger.error(f"Failed to send message: {e}")
 

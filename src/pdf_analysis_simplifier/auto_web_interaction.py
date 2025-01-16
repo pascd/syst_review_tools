@@ -4,7 +4,7 @@ import undetected_chromedriver as uc
 from fake_useragent import UserAgent
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException, WebDriverException
+from selenium.common.exceptions import NoSuchElementException, WebDriverException, TimeoutException
 from selenium.webdriver.common.action_chains import ActionChains
 import base64
 import os
@@ -66,16 +66,20 @@ class AutoWebInteraction:
             return False
 
     # Wait for an element to be clickable and click it
-    def wait_and_click_element(self, by, value, timeout=10):
+    def wait_and_click_element(self, by, value, timeout=60):
         try:
             element = WebDriverWait(self._driver, timeout).until(
                 EC.element_to_be_clickable((by, value))
             )
             element.click()
             return True
+        except TimeoutException:
+            logger.error(f"Timeout: Element not clickable - {by}='{value}'")
+        except NoSuchElementException:
+            logger.error(f"No such element: {by}='{value}'")
         except Exception as e:
-            print(f"Failed to wait and click element: {e}")
-            return False
+            logger.error(f"Failed to wait and click element: {e}")
+        return False
 
     # Click an element at a specific position using JavaScript
     def click_element_with_javascript(self, elements, position):

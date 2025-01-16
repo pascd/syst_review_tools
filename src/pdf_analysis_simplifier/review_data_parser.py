@@ -1,7 +1,6 @@
 import os
 import yaml
-from pandas.io.xml import preprocess_data
-
+import re
 from src.pdf_analysis_simplifier.response_handler import ResponseHandler
 
 class ReviewDataParser:
@@ -10,165 +9,131 @@ class ReviewDataParser:
         self.config = config
         self.response_handler = ResponseHandler()
 
-    # Load YAML file
     def load_yaml_file(self):
         try:
             with open(self.config, 'r') as stream:
                 return yaml.safe_load(stream)
-        except yaml.YAMLError as _exc:
-            print("Error when loading yaml file: {}".format(_exc))
+        except yaml.YAMLError as exc:
+            print(f"Error loading YAML file: {exc}")
             return None
 
-    # Save data to the YAML file
     def save_yaml_file(self, data):
         try:
             with open(self.config, 'w') as stream:
                 yaml.dump(data, stream)
                 return True
-        except yaml.YAMLError as _exc:
-            print("Error when saving yaml file: {}".format(_exc))
+        except yaml.YAMLError as exc:
+            print(f"Error saving YAML file: {exc}")
             return False
 
-    # Get all questions for quality assessment
     def get_all_quality_assessment_fields(self):
-        # Load data parameters into a variable
         data = self.load_yaml_file()
+        if not data or "quality_assessment_questions" not in data:
+            print("Invalid or missing quality assessment questions.")
+            return []
+        return [{"id": q["id"], "question": q["question"], "scores": q["scores"]} for q in data["quality_assessment_questions"]]
 
-        # If the file is empty, return None
-        if data is None:
-            print("Error when loading yaml file")
-            return False
-        else:
-            qa_questions = data["quality_assessment_questions"]
-            return [{"id": q["id"], "question": q["question"], "scores": q["scores"]} for q in qa_questions]
-
-    # Get all data extraction fields
     def get_all_data_extraction_fields(self):
-        # Load data parameters into a variable
         data = self.load_yaml_file()
+        if not data or "data_extraction_fields" not in data:
+            print("Invalid or missing data extraction fields.")
+            return []
+        return [{"key": field["key"], "description": field["description"]} for field in data["data_extraction_fields"]]
 
-        # If the file is empty, return None
-        if data is None:
-            print("Error when loading yaml file")
-            return False
-        else:
-            de_fields = data["data_extraction_fields"]
-            return [{"key": data["key"], "description": data["description"]} for data in de_fields]
-
-    # Retrieve the cutoff score from config file
     def get_cutoff_score(self):
         data = self.load_yaml_file()
+        return data.get("cutoff_score", 0)
 
-        if data is None:
-            print("Error when loading yaml file")
-            return False
-        else:
-            return data["cutoff_score"]
-
-    # Return prompt for quality assessment type: "qa" or "de"
     def get_analysis_prompt(self):
-        prompt = ""
-        prompt += "Hello ChatGPT, imagine you are a researcher, I want you to perform a systematic analysis on the following PDF. Please be concise and exact, following the next parameters. \n"
-
-        # Retrieve all analysis fields
         qa_fields = self.get_all_quality_assessment_fields()
-        data_extraction_fields = self.get_all_data_extraction_fields()
+        de_fields = self.get_all_data_extraction_fields()
         cutoff_score = self.get_cutoff_score()
 
-        prompt += "The quality assessment questions and scores are: \n"
+        if not qa_fields or not de_fields:
+            print("Missing required fields for analysis prompt.")
+            return ""
 
-        if not qa_fields:
-            print("No questions found")
-            return False
+        prompt = "Hello, perform a systematic analysis. Parameters:\n"
+        prompt += "Quality Assessment Questions:\n"
+        for qa in qa_fields:
+            prompt += f"{qa['id']} - {qa['question']} (Scores: {', '.join(map(str, qa['scores']))})\n"
 
-        for qa_field in qa_fields:
-            # Convert the scores list to a string
-            scores_str = ", ".join(map(str, qa_field["scores"]))
-            prompt += qa_field["id"] + "\n" + qa_field["question"] + "\n" + scores_str + "\n\n"
+        prompt += "Data Extraction Fields:\n"
+        for de in de_fields:
+            prompt += f"{de['key']}: {de['description']}\n"
 
-        prompt += "And the respective data extraction fields below:\n\n"
-
-        if not data_extraction_fields:
-            print("No data extraction fields found")
-            return False
-
-        for data_field in data_extraction_fields:
-            prompt += data_field["key"] + ": " + data_field["description"] + "\n"
-
-        prompt += (
-            f"In your answers, just include the ID of the quality assessment questions, a brief explanation of it, and the score, something like this: \n"
-            "QE1: brief explanation \n"
-            "QE1 Score: score \n\n"
-            f"For data extraction fields, if the sum of the scores is equal to or higher than the cutoff score, which is equal to {cutoff_score}, give me an answer like this: \n"
-            f"data_field_1: brief explanation \n"
-            "data_field_2: brief explanation \n\n"
-            "Please also return the score for the paper in the following format: \n"
-            "#score: score \n"
-            "and so on. Thank you for your help."
-        )
-
-        # Replace newlines with spaces or another delimiter
-        prompt = prompt.replace("\n", " ")
-
+        prompt += (f"Cutoff Score: {cutoff_score}.\nFormat your answers as instructed."
+                   f"The Quality assessment should be formated like this: \n"
+                   f"QE1: Brief description \n"
+                   f"QE1 Score: score \n\n"
+                   f""
+                   f"QE2: Brief description \n"
+                   f"QE2 Score: score \n\n"
+                   f""
+                   f"About Data extraction Fields:\n"
+                   f"Author: \n"
+                   f"Year: \n"
+                   f"Title: \n"
+                   f"ẽtc."
+                   f"Write everything in different lines, without bullet points, and always using the format I am asking you. Thank you.")
         return prompt
 
-    # Retrieve all quality assessment descriptions
+    def preprocess_qa_data(self, qa_data, total_score):
+        flattened_data = {}
+
+        for qa_key, qa_info in qa_data.items():
+            # Check if qa_info is a dictionary
+            if isinstance(qa_info, dict):
+                # Add description and score to flattened dictionary
+                flattened_data[qa_key] = qa_info.get(qa_key, "")
+                flattened_data[f"{qa_key} Score"] = qa_info.get("Score", "")
+            else:
+                # Handle unexpected cases (e.g., if qa_info is a float or string)
+                flattened_data[qa_key] = str(qa_info)
+                flattened_data[f"{qa_key} Score"] = ""
+
+        # Add total score
+        flattened_data["Total Score"] = total_score
+
+        return flattened_data
+
     def get_quality_assessment_text(self, response):
+
         qa_data = {}
-        for i in self.get_all_quality_assessment_fields():  # Assuming there are QE1 to QE8
-            qe_key = f"QE{i}"
-            qe_score_key = f"{qe_key} Score"
+        total_score = 0
 
-            qe_description = self.response_handler.extract_by_identifier(response, qe_key)
-            qe_score = self.response_handler.extract_by_identifier(response, qe_score_key)
+        qa_pattern = re.compile(r"(QE\d+):\s*(.*?)\s*QE\d+\s*Score:\s*([0-9.]+)", re.DOTALL)
+        matches = qa_pattern.findall(response)
 
-            if qe_description and qe_score:
-                qa_data[qe_key] = {
-                    "Description": qe_description,
-                    "Score": qe_score
-                }
+        for match in matches:
+            question_id, description, score = match
+            score = float(score.strip())
+            qa_data[question_id] = {
+                f"{question_id}": description.strip(),
+                "Score": score
+            }
+            total_score += score
 
-        return self.preprocess_qa_data(qa_data)
+        # Add total and average scores
+        qa_data["Total Score"] = total_score
+
+        return self.preprocess_qa_data(qa_data, total_score)
+
 
     def get_data_extraction_text(self, response):
-        de_data = {}
-        de_fields = self.get_all_data_extraction_fields()  # Get all data extraction fields from the YAML config
 
-        if not de_fields:
-            print("No data extraction fields found in the YAML configuration.")
+        de_data = {}
+        de_section_pattern = re.compile(r"Data Extraction:\s*(.*?)\Z", re.DOTALL)
+        de_section_match = de_section_pattern.search(response)
+        if not de_section_match:
             return de_data
 
-        for field in de_fields:
-            field_key = field["key"]  # e.g., "Title", "Author", "Year", etc.
-            field_value = self.response_handler.extract_by_identifier(response, field_key)
+        de_content = de_section_match.group(1)
+        de_lines = de_content.splitlines()
 
-            if field_value:
-                de_data[field_key] = field_value
-            else:
-                print(f"Warning: No value found for data extraction field '{field_key}'.")
+        for line in de_lines:
+            if ":" in line:
+                key, value = map(str.strip, line.split(":", 1))
+                de_data[key] = value
 
         return de_data
-
-    def get_score_text(self, response, identifier):
-
-        # Use the ResponseHandler to extract the score
-        score_text = self.response_handler.extract_by_identifier(response, identifier)
-
-        if score_text:
-            try:
-                # Convert the extracted score text to a float
-                return float(score_text)
-            except ValueError:
-                print(f"Error: The extracted score '{score_text}' is not a valid number.")
-                return None
-        else:
-            print(f"Error: No score found with identifier '{identifier}'.")
-            return None
-
-    def preprocess_qa_data(self, qa_data):
-
-        flat_data = {}
-        for qe_key, qe_info in qa_data.items():
-            flat_data[qe_key] = qe_info["Description"]
-            flat_data[f"{qe_key} Score"] = qe_info["Score"]
-        return flat_data
