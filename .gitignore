@@ -78,7 +78,9 @@ srv_gen/
 
 #ignore env files
 .env
+.venv
 
 *.idea/
 *.vscode/
 *.cmake-build-debug/
+__pycache__
