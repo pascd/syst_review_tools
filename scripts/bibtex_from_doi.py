@@ -6,14 +6,14 @@ import pandas as pd
 from urllib.parse import quote
 
 # ------------ CONFIG ------------
-INPUT_XLSX = "/home/pedro/Documents/git-repos/syst_review_tools/part4-analysed-with-doi-bibtex.xlsx"   # produced earlier
+INPUT_XLSX = "EXCEL_FILE_PATH"   # produced earlier
 SHEET_NAME = "de_sheet_devel"                        # your target sheet
 TITLE_COL_CANDIDATES = ["TITLE", "Title", "title", "Paper", "paper", "Name", "name"]
 DOI_COL = "DOI"
 OUT_TXT = "bibtex_all.txt"
 UPDATE_EXCEL_BIBTEX = True                           # set to False to skip updating Excel
 BIBTEX_COL = "BibTeX"
-USER_AGENT = "INESC-TEC-bibtex-fetcher/1.0 (mailto:your.email@example.com)"  # please customize
+USER_AGENT = "User"  # please customize
 REQUESTS_TIMEOUT = 25
 MAX_RETRIES = 4
 BACKOFF_BASE_SECS = 0.6
@@ -114,14 +114,14 @@ def main():
     with open(OUT_TXT, "w", encoding="utf-8") as f:
         f.write("\n\n".join(non_empty_bib))
 
-    print(f"✅ Wrote {len(non_empty_bib)} entries to {OUT_TXT} "
+    print(f"Wrote {len(non_empty_bib)} entries to {OUT_TXT} "
           f"(fetched={fetched_count}, fallback={fallback_count})")
 
     # Optionally store back into Excel in a BibTeX column
     if UPDATE_EXCEL_BIBTEX:
         df[BIBTEX_COL] = bib_list
         df.to_excel(INPUT_XLSX, sheet_name=SHEET_NAME, index=False)
-        print(f"✅ Updated column '{BIBTEX_COL}' in {INPUT_XLSX} (sheet '{SHEET_NAME}')")
+        print(f"Updated column '{BIBTEX_COL}' in {INPUT_XLSX} (sheet '{SHEET_NAME}')")
 
 if __name__ == "__main__":
     main()

@@ -14,12 +14,12 @@ def request_data_crossref(doi_):
 
     # CrossRef API endpoint for the DOI
     url = f"http://api.crossref.org/works/{encoded_doi_}"
-    
+
     try:
         # Send a GET request to the API
         response = requests.get(url)
         response.raise_for_status()
-        
+
         # Parse the JSON response
         data = response.json()
 
@@ -72,6 +72,6 @@ def get_data_from_doi_main(doi_):
     return data_request_
 
 if __name__ == "__main__":
-    
+
     _doi = sys.argv[1]
     get_data_from_doi_main(_doi)
